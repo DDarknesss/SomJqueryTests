@@ -1,0 +1,27 @@
+/* ELEMENTS */
+li {
+    display: flex;
+}
+
+label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+span{
+    margin-left: 10px;
+}
+
+/* Classes */
+.container{
+    justify-content: center;
+    display: flex;
+    margin-top: 10px;
+}
+
+/* ID */
+#list-container {
+    margin: 0;
+    padding: 0;
+}
