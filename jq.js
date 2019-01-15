@@ -62,46 +62,88 @@ $(document).ready(function() {
             this.array.push({
                 "userText": values,
                 "checkValue": false,
-                "id" : this.id++
+                "id" : ++this.id
             });
         }
 
         replaceItem(id, changedText){
-            this.array[id].userText =  changedText;
+            let ArrayID = TheModel.uiIDtoArrayID(id);
+            this.array[ArrayID].userText = changedText;
         }
 
         spliceArray(id){
-            this.array.splice(id, 1);
+            let ArrayID = TheModel.uiIDtoArrayID(id);
+            this.array.splice(ArrayID, 1);
         }
 
         changeCheckValue(id){
-            if(this.array[id].checkValue){
-                this.array[id].checkValue = false;
+            let ArrayID = TheModel.uiIDtoArrayID(id);
+            if(this.array[ArrayID].checkValue){
+                this.array[ArrayID].checkValue = false;
             }else {
-            this.array[id].checkValue = true;
+                this.array[ArrayID].checkValue = true;
             }
+        }
+        
+        uiIDtoArrayID(id){
+            let ArrayID = this.array.findIndex(obj => {
+                let idToInt = parseInt(id);
+                return obj.id === idToInt;
+            }) 
+            return ArrayID;
         }
         
         getArray(){
             return this.array;
         }
+
+        emptyTasks(){
+            this.array = TheModel.getArray();
+            this.array = [];
+        }
+
+        addToLS(tasks){
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        intializeFromLS(){
+                const storedTasks = JSON.parse(localStorage.getItem('tasks'));
+                this.array = storedTasks || [];
+                this.id = TheModel.getTheMAXId(this.array);
+        }
+        
+        getTheMAXId(tasklist){
+            if ( tasklist.length === 0){
+                return 0;
+            }
+
+            let maxID = Math.max.apply(Math, tasklist.map(function(o) { return o.id; }));
+            return maxID;
+        }
     }
 
     const TheView = new View();
     const TheModel = new Model();
+    TheModel.intializeFromLS();
+    TheView.UpdateView(TheModel.getArray());
+
 
     $input.on(`keyup`, function keyingUp(e) {
         let userText = $input.val();
         if (userText && e.which == 13){
             TheModel.addToArray(userText);
             $(this).val('');
+            TheModel.addToLS(TheModel.getArray());
             TheView.UpdateView(TheModel.getArray());
         }
     });
 
+    // Delete
+
     $list.on(`click`, `.delete-button`, function(){
         let id = $(this).parent(`li`).attr(`id`);
         TheModel.spliceArray(id);
+        TheModel.addToLS(TheModel.getArray());
         TheView.UpdateView(TheModel.getArray());
     });
 
@@ -109,8 +151,8 @@ $(document).ready(function() {
     $list.on( `dblclick`, `.input-line`, function() {
         let id = $(this).attr(`id`);
         TheView.hideTaskText(id);
+        TheModel.addToLS(TheModel.getArray());
     } );
-
 
     $list.on(`keyup`, `.hidden`, function keyingUp(e) {
         let id = $(this).parent(`li`).attr(`id`);
@@ -119,6 +161,7 @@ $(document).ready(function() {
             TheView.showTaskText(id);
             TheModel.replaceItem(id, userText);
             TheView.UpdateView(TheModel.getArray());
+            TheModel.addToLS(TheModel.getArray());
         }
     });
 
@@ -126,10 +169,18 @@ $(document).ready(function() {
 
     $list.on(`click`, `.check-class`, function(){
         let id = $(this).parent(`li`).attr(`id`);
+        TheModel.changeCheckValue(id);
         if($(this).is(':checked')){
             TheView.checkedText(id);
         } else {
             TheView.unchekedText(id);
         }    
     })
+
+    $(`#main-button`).on(`click`, function(){
+        TheModel.emptyTasks();
+         TheModel.addToLS(TheModel.getArray());
+        TheView.UpdateView(TheModel.getArray());
+    })
+
 });

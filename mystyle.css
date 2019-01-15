@@ -13,9 +13,10 @@ label {
 span{
     margin-left: 10px;
 }
+
 ul{
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
 }
 /* Classes */
 .container{
@@ -50,7 +51,7 @@ ul{
     padding: 0;
 }
 
-#info-button {
+#main-button {
     margin: auto;
     display: flex;
     margin-top: 10px;
