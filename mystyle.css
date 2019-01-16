@@ -28,7 +28,10 @@ ul{
     display: none;
     width: 130px;
 }
-
+.overline{
+    text-decoration: line-through;
+    color: grey;
+}
 .checkbox-round {
     width: 1.3em;
     height: 1.3em;
