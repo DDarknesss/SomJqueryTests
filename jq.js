@@ -4,37 +4,37 @@ $(document).ready(function() {
 
     let TheView;
     let TheModel;
-
-    // TheModel.intializeFromLS();
-    // TheView.UpdateView(TheModel.getArray());
+    let LS;
 
     const init = () => {
 		$input = $('#main-input');
 		$list = $('#list-container');
 
     	TheView = new View('#list-container');
-    	TheModel = new Model();
+        TheModel = new Model();
+        LS = new LocalStorage()
     }
 
     init();
 
+    TheModel.replaceTasksFromLS(LS.getFromLS());
+    TheView.UpdateView(TheModel.getArray());
 
     $input.on(`keyup`, function keyingUp(e) {
         let userText = $input.val();
         if (userText && e.which == 13){
             TheModel.addToArray(userText);
             $(this).val('');
-            // TheModel.addToLS(TheModel.getArray());
+            LS.setToLS(TheModel.getArray());
             TheView.UpdateView(TheModel.getArray());
         }
     });
 
-    // Delete
-
+// Delete
     $list.on(`click`, `.delete-button`, function(){
         let id = $(this).parent(`li`).attr(`id`);
         TheModel.spliceArray(id);
-        // TheModel.addToLS(TheModel.getArray());
+        LS.setToLS(TheModel.getArray());
         TheView.UpdateView(TheModel.getArray());
     });
 
@@ -42,17 +42,16 @@ $(document).ready(function() {
     $list.on( `dblclick`, `.input-line`, function() {
         let id = $(this).attr(`id`);
         TheView.hideTaskText(id);
-        // TheModel.addToLS(TheModel.getArray());
+        LS.setToLS(TheModel.getArray());
     } );
 
     $list.on(`keyup`, `.hidden`, function keyingUp(e) {
         let id = $(this).parent(`li`).attr(`id`);
         let userText =  $(`#${id}`).children(`.hidden`).val();
         if (userText && e.which == 13) {
-            TheView.showTaskText(id);
             TheModel.replaceItem(id, userText);
             TheView.UpdateView(TheModel.getArray());
-            // TheModel.addToLS(TheModel.getArray());
+            LS.setToLS(TheModel.getArray());
         }
     });
 
@@ -61,12 +60,13 @@ $(document).ready(function() {
     $list.on(`click`, `.check-class`, function(){
         let id = $(this).parent(`li`).attr(`id`);
         TheModel.changeCheckValue(id);
+        LS.setToLS(TheModel.getArray());
         TheView.UpdateView(TheModel.getArray());
     })
 
     $(`#main-button`).on(`click`, function(){
         TheModel.emptyTasks();
-         // TheModel.addToLS(TheModel.getArray());
+        LS.setToLS(TheModel.getArray());
         TheView.UpdateView(TheModel.getArray());
     });
 
@@ -82,10 +82,6 @@ class View {
         $(`#${id}`).children(`#task-edit`).show();
    }
 
-   // showTaskText(id){
-   //      $(`#${id}`).children(`.hidden`).hide();
-   //      $(`#${id}`).children(`.added-span`).show();
-   // }
 
    removeItems(){
         this.$list.empty();   
@@ -111,7 +107,6 @@ class View {
     }
 }
 
-
 class Model {
     constructor (){
         this.array = [];
@@ -119,35 +114,30 @@ class Model {
     }
 
     addToArray(values) {
-        this.array.push({
-            "userText": values,
-            "checkValue": false,
-            "id" : ++this.id
-        });
+        this.array.push(
+            {
+                "userText": values,
+                "checkValue": false,
+                "id" : ++this.id
+            });
     }
 
     replaceItem(id, changedText) {
-        let ArrayID = this.uiIDtoArrayID(id);
+        let ArrayID = this.elementIdToIndex (id);
         this.array[ArrayID].userText = changedText;
     }
 
-    spliceArray(id){
-        let ArrayID = this.uiIDtoArrayID(id);
+    spliceArray(id) {
+        let ArrayID = this.elementIdToIndex (id);
         this.array.splice(ArrayID, 1);
     }
 
     changeCheckValue(id) {
-        let ArrayID = this.uiIDtoArrayID(id);
+        let ArrayID = this.elementIdToIndex (id);
         this.array[ArrayID].checkValue = !this.array[ArrayID].checkValue;
     }
     
-    uiIDtoArrayID(id) {
-    	// const idToInt = parseInt(id);
-        // let ArrayID = this.array.findIndex((obj) => {
-        //     return obj.id === idToInt;
-        // });
-        // return ArrayID;
-
+    elementIdToIndex (id) {
         let idToInt = parseInt(id);
         return this.array.findIndex((obj) =>  obj.id === idToInt);
     }
@@ -160,23 +150,35 @@ class Model {
         this.array = [];
     }
 
-    // addToLS(tasks){
-    //     localStorage.setItem('tasks', JSON.stringify(tasks));
-    // }
+    replaceTasksFromLS(passedArray){
+        passedArray ? this.array = passedArray : [];
+        this.id = this.getTheMaxId();
+    }
 
-    // intializeFromLS(){
-    //         const storedTasks = JSON.parse(localStorage.getItem('tasks'));
-    //         this.array = storedTasks || [];
-    //         this.id = TheModel.getTheMAXId(this.array);
-    // }
-    
-    // getTheMAXId(tasklist){
-    //     if ( tasklist.length === 0){
-    //         return 0;
-    //     }
 
-    //     let maxID = Math.max.apply(Math, tasklist.map(function(o) { return o.id; }));
-    //     return maxID;
-    // }
+    getTheMaxId(){
+        if ( this.array.length === 0){
+            return 0;
+        }
+
+        let maxID = Math.max.apply(Math, this.array.map(o => o.id));
+        return maxID;
+    }
 }
 
+class LocalStorage {
+
+    constructor (){
+        this.array = [];
+    }
+    
+    setToLS(tasks){
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    getFromLS(){
+        const storedTasks = JSON.parse(localStorage.getItem('tasks'));
+        this.array = storedTasks || [];
+        return this.array;
+    }
+}
